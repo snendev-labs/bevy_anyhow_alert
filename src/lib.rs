@@ -3,6 +3,10 @@ use bevy::prelude::*;
 pub use bevy_mod_try_system::*;
 pub use bevy_toasts_ui::ToastPlugin;
 
+pub type ErrorVec = Vec<anyhow::Error>;
+pub type ResultVec<T> = std::result::Result<T, ErrorVec>;
+pub type Result<T> = anyhow::Result<T>;
+
 pub trait AnyToastsExt<In, Marker, E>: TrySystemExt<In, Marker, (), E>
 where
     E: std::fmt::Debug + Send + Sync + 'static,
@@ -12,11 +16,10 @@ where
 
 impl<F, In, Marker> AnyToastsExt<In, Marker, Vec<anyhow::Error>> for F
 where
-    F: TrySystemExt<In, Marker, (), Vec<anyhow::Error>>
-        + IntoSystem<In, Result<(), Vec<anyhow::Error>>, Marker>,
+    F: TrySystemExt<In, Marker, (), Vec<anyhow::Error>> + IntoSystem<In, ResultVec<()>, Marker>,
 {
     fn anyhow(self) -> impl System<In = In, Out = ()> {
-        self.map(|result: Result<(), Vec<anyhow::Error>>| {
+        self.map(|result: ResultVec<()>| {
             result.map_err(|errors| {
                 errors
                     .into_iter()
@@ -30,14 +33,11 @@ where
 
 impl<F, In, Marker> AnyToastsExt<In, Marker, anyhow::Error> for F
 where
-    F: TrySystemExt<In, Marker, (), anyhow::Error>
-        + IntoSystem<In, Result<(), anyhow::Error>, Marker>,
+    F: TrySystemExt<In, Marker, (), anyhow::Error> + IntoSystem<In, Result<()>, Marker>,
 {
     fn anyhow(self) -> impl System<In = In, Out = ()> {
-        self.map(|result: Result<(), anyhow::Error>| {
-            result.map_err(|error| vec![format!("{error}")])
-        })
-        .pipe_err(ToastPlugin::toast)
+        self.map(|result: Result<()>| result.map_err(|error| vec![format!("{error}")]))
+            .pipe_err(ToastPlugin::toast)
     }
 }
 
@@ -57,7 +57,7 @@ mod tests {
         }
     }
 
-    fn alternate_output(mut counter: Local<usize>) -> Result<(), anyhow::Error> {
+    fn alternate_output(mut counter: Local<usize>) -> Result<()> {
         *counter += 1;
         if *counter % 2 == 1 {
             Ok(())
@@ -66,7 +66,7 @@ mod tests {
         }
     }
 
-    fn alternate_output_many_errors(mut counter: Local<usize>) -> Result<(), Vec<anyhow::Error>> {
+    fn alternate_output_many_errors(mut counter: Local<usize>) -> ResultVec<()> {
         *counter += 1;
         if *counter % 2 == 1 {
             Ok(())
