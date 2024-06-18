@@ -14,7 +14,6 @@ bevy_mod_try_system = { git = "https://github.com/GroveStStudios/bevy_mod_try_sy
 bevy_toasts_ui = { git = "https://github.com/GroveStStudios/bevy_toasts_ui" }
 
 [dev-dependencies]
-bevy_editor_pls = "*"
 thiserror = "1.0"
 
 [[example]]
