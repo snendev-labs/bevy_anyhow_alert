@@ -1,14 +1,21 @@
 [package]
-name = "bevy_toasts"
+name = "bevy_anytoasts"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.13", default-features = false, features = ["bevy_ui", "bevy_text", "default_font"] }
+bevy = { version = "0.13", default-features = false, features = [
+    "bevy_ui",
+    "bevy_text",
+    "default_font",
+] }
 anyhow = "1.0"
+bevy_mod_try_system = { git = "https://github.com/GroveStStudios/bevy_mod_try_system" }
+bevy_toasts_ui = { git = "https://github.com/GroveStStudios/bevy_toasts_ui" }
 
 [dev-dependencies]
 bevy_editor_pls = "*"
+thiserror = "1.0"
 
 [[example]]
 name = "toasts"
