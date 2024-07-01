@@ -12,20 +12,27 @@
 //!
 //! ```
 //! use bevy::prelude::*;
-//! use bevy_anyhow_alerts::{AlertsPlugin, AnyhowAlertExt, Result};
+//! use bevy_anyhow_alert::{AlertsPlugin, AnyhowAlertExt, Result};
 //!
 //! fn main() {
 //!     let mut app = App::new();
+//!     app.add_plugins(MinimalPlugins);
 //!     app.add_plugins(AlertsPlugin::new());
 //!     app.add_systems(Update, fallible_system.anyhow_alert());
-//!     app.run();
 //! }
+//!
+//! #[derive(Component)]
+//! struct MyComponent;
 //!
 //! fn fallible_system(my_query: Query<&MyComponent>) -> Result<()> {
 //!     for my_value in my_query.iter() {
 //!         // we can use the `?` operator!
-//!         my_value.get_result()?;
+//!         get_result()?;
 //!     }
+//!     Ok(())
+//! }
+//!
+//! fn get_result() -> Result<()> {
 //!     Ok(())
 //! }
 //! ```
@@ -34,12 +41,17 @@
 //! a vector of `Result`s:
 //!
 //! ```
+//! use bevy::prelude::*;
+//! use bevy_anyhow_alert::{AnyhowAlertExt, Result, ResultVec};
+//!
+//! #[derive(Component)]
+//! struct MyComponent;
+//!
 //! fn fallible_system(my_query: Query<&MyComponent>) -> ResultVec<()> {
 //!     let mut errors = vec![];
 //!     for my_value in my_query.iter() {
-//!         // we can use the `?` operator!
-//!         if let Err(error) = my_value.get_result() {
-//!             errors.push(error);
+//!         if let Err(error) = get_result() {
+//!            errors.push(error);
 //!         }
 //!     }
 //!     if errors.is_empty() {
@@ -47,6 +59,10 @@
 //!     } else {
 //!         Err(errors)
 //!     }
+//! }
+//!
+//! fn get_result() -> Result<()> {
+//!     Ok(())
 //! }
 //! ```
 //!

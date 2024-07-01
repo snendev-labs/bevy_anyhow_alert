@@ -16,8 +16,8 @@ bevy = { version = "0.13", default-features = false, features = [
     "default_font",
 ] }
 anyhow = "1.0"
-bevy_mod_try_system = { git = "https://github.com/GroveStStudios/bevy_mod_try_system" }
-bevy_ui_mod_alerts = { git = "https://github.com/GroveStStudios/bevy_ui_mod_alerts" }
+bevy_mod_try_system = { version = "0.1" }
+bevy_ui_mod_alerts = { version = "0.1" }
 
 [dev-dependencies]
 thiserror = "1.0"
