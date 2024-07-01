@@ -10,7 +10,7 @@ fn main() {
     app.add_plugins(AlertsPlugin::new());
 
     app.add_systems(Startup, init);
-    app.add_systems(Update, fire_error.anyhow().in_set(MySystems));
+    app.add_systems(Update, fire_error.anyhow_alert().in_set(MySystems));
 
     app.run();
 }

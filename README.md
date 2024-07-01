@@ -12,7 +12,11 @@ When writing your systems, return one of the two accepted types:
 Then call `my_system.anyhow_alert()`! When it errors, you'll see toasts fire (don't forget a camera).
 
 ```rust
-
+let mut app = App::new();
+// ...
+app.add_system(fire_error.anyhow_alert());
+// ..
+app.run();
 ```
 
 Feel free to define whatever types of errors your want throughout your application. When returning errors, the error is wrapped in an `anyhow::Error` with `anyhow::Error::new(MyError)`. This is especially easy if you derive `thiserror::Error` on your Error type.
