@@ -2,6 +2,8 @@
 
 This crate offers an extension trait for systems that helps with system- and application-level error management in Bevy. Mildly configurable using the re-export of `bevy_ui_mod_alerts`. The main benefit: your systems can return `anyhow::Result` (or even `Result<T, Vec<anyhow::Error>>`)!
 
+![A video snippet of the "toasts" example, where some animated toasts spawn in the bottom right corner.](assets/example.gif)
+
 ## How To Use
 
 When writing your systems, return one of the two accepted types:

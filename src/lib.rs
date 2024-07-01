@@ -4,7 +4,7 @@
 //! types to opt-in to a simple `Alert`-based error UI.
 //!
 //! The main benefit: your systems can return `anyhow::Result` (or even
-//! `Result<T, Vec<anyhow::Error>>`) with one (chainable) method: `system.anyhow_alert()`
+//! `Result<T, Vec<anyhow::Error>>`) with one (chainable) method: `system.anyhow_alert()`.
 //!
 //! ## Examples
 //!
@@ -19,6 +19,7 @@
 //!     app.add_plugins(MinimalPlugins);
 //!     app.add_plugins(AlertsPlugin::new());
 //!     app.add_systems(Update, fallible_system.anyhow_alert());
+//!     // app.run();
 //! }
 //!
 //! #[derive(Component)]
