@@ -1,6 +1,6 @@
 # bevy_anyhow_alert
 
-Simple application-level error management. Mildly configurable; this is in early stages. The main benefit: your systems can return `anyhow::Result` (or even `Result<T, Vec<anyhow::Error>>`)!
+This crate offers an extension trait for systems that helps with system- and application-level error management in Bevy. Mildly configurable using the re-export of `bevy_ui_mod_alerts`. The main benefit: your systems can return `anyhow::Result` (or even `Result<T, Vec<anyhow::Error>>`)!
 
 ## How To Use
 
@@ -23,13 +23,8 @@ Feel free to define whatever types of errors your want throughout your applicati
 
 ```rust
 #[derive(Debug, Error)]
+#[error("testing!")]
 pub struct MyError;
-
-impl std::fmt::Display for MyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "My Error")
-    }
-}
 
 fn fire_error(inputs: Res<ButtonInput<KeyCode>>) -> anyhow::Result<()> {
     if inputs.just_pressed(KeyCode::Space) {
@@ -38,5 +33,4 @@ fn fire_error(inputs: Res<ButtonInput<KeyCode>>) -> anyhow::Result<()> {
         Ok(())
     }
 }
-`
 ```

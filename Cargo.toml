@@ -1,6 +1,11 @@
 [package]
 name = "bevy_anyhow_alert"
 version = "0.1.0"
+authors = ["Sean Sullivan <me@snen.dev>"]
+description = "Easy system error handling with Bevy; let your systems return `Result`!"
+license = "MIT OR Apache-2.0"
+keywords = ["bevy", "errors", "gamedev", "game", "result"]
+readme = "README.md"
 edition = "2021"
 
 [dependencies]

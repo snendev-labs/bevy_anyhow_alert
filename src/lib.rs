@@ -1,3 +1,57 @@
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+
+//! `bevy_anyhow_alert` provides an extension trait enabling Bevy systems that return `Result`
+//! types to opt-in to a simple `Alert`-based error UI.
+//!
+//! The main benefit: your systems can return `anyhow::Result` (or even
+//! `Result<T, Vec<anyhow::Error>>`) with one (chainable) method: `system.anyhow_alert()`
+//!
+//! ## Examples
+//!
+//! This example shows a system that returns some `Result`:
+//!
+//! ```
+//! use bevy::prelude::*;
+//! use bevy_anyhow_alerts::{AlertsPlugin, AnyhowAlertExt, Result};
+//!
+//! fn main() {
+//!     let mut app = App::new();
+//!     app.add_plugins(AlertsPlugin::new());
+//!     app.add_systems(Update, fallible_system.anyhow_alert());
+//!     app.run();
+//! }
+//!
+//! fn fallible_system(my_query: Query<&MyComponent>) -> Result<()> {
+//!     for my_value in my_query.iter() {
+//!         // we can use the `?` operator!
+//!         my_value.get_result()?;
+//!     }
+//!     Ok(())
+//! }
+//! ```
+//!
+//! Alternatively, the system can collect errors without interrupting the iteration and return
+//! a vector of `Result`s:
+//!
+//! ```
+//! fn fallible_system(my_query: Query<&MyComponent>) -> ResultVec<()> {
+//!     let mut errors = vec![];
+//!     for my_value in my_query.iter() {
+//!         // we can use the `?` operator!
+//!         if let Err(error) = my_value.get_result() {
+//!             errors.push(error);
+//!         }
+//!     }
+//!     if errors.is_empty() {
+//!         Ok(())
+//!     } else {
+//!         Err(errors)
+//!     }
+//! }
+//! ```
+//!
+//! The resulting UI is somewhat restylable but may not fit every application.
+
 use bevy::prelude::*;
 
 pub use bevy_mod_try_system::*;
@@ -7,10 +61,17 @@ pub type ErrorVec = Vec<anyhow::Error>;
 pub type ResultVec<T> = std::result::Result<T, ErrorVec>;
 pub type Result<T> = anyhow::Result<T>;
 
+/// Defines the `anyhow_alert` method which pipes system output to an Alert UI if the output
+/// is an error.
+///
+/// This trait is implemented for all `IntoSystem` that return `anyhow::Result` or
+/// `Result<(), Vec<anyhow::Error>>`.
 pub trait AnyhowAlertExt<In, Err, Marker>: TrySystemExt<In, (), Err, Marker>
 where
     Err: std::fmt::Debug + Send + Sync + 'static,
 {
+    /// Pipes system output to an alert UI if the Result is Err. The `Ok` variant can be piped
+    /// into subsequent systems.
     fn anyhow_alert(self) -> impl System<In = In, Out = ()>;
 }
 
@@ -51,13 +112,8 @@ mod tests {
     use super::*;
 
     #[derive(Debug, Error)]
+    #[error("testing!")]
     struct TestError;
-
-    impl std::fmt::Display for TestError {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "Test error reached!")
-        }
-    }
 
     fn alternate_output(mut counter: Local<usize>) -> Result<()> {
         *counter += 1;
