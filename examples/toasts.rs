@@ -2,12 +2,12 @@ use thiserror::Error;
 
 use bevy::prelude::*;
 
-use bevy_anytoasts::{AnyToastsExt, ToastPlugin};
+use bevy_anyhow_alert::{AlertsPlugin, AnyhowAlertExt};
 
 fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
-    app.add_plugins(ToastPlugin::new());
+    app.add_plugins(AlertsPlugin::new());
 
     app.add_systems(Startup, init);
     app.add_systems(Update, fire_error.anyhow().in_set(MySystems));

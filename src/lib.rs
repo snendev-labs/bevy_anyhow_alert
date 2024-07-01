@@ -1,24 +1,25 @@
 use bevy::prelude::*;
 
 pub use bevy_mod_try_system::*;
-pub use bevy_toasts_ui::ToastPlugin;
+pub use bevy_ui_mod_alerts::AlertsPlugin;
 
 pub type ErrorVec = Vec<anyhow::Error>;
 pub type ResultVec<T> = std::result::Result<T, ErrorVec>;
 pub type Result<T> = anyhow::Result<T>;
 
-pub trait AnyToastsExt<In, Marker, E>: TrySystemExt<In, Marker, (), E>
+pub trait AnyhowAlertExt<In, Err, Marker>: TrySystemExt<In, (), Err, Marker>
 where
-    E: std::fmt::Debug + Send + Sync + 'static,
+    Err: std::fmt::Debug + Send + Sync + 'static,
 {
-    fn anyhow(self) -> impl System<In = In, Out = ()>;
+    fn anyhow_alert(self) -> impl System<In = In, Out = ()>;
 }
 
-impl<F, In, Marker> AnyToastsExt<In, Marker, Vec<anyhow::Error>> for F
+impl<F, In, Marker> AnyhowAlertExt<In, Vec<anyhow::Error>, Marker> for F
 where
-    F: TrySystemExt<In, Marker, (), Vec<anyhow::Error>> + IntoSystem<In, ResultVec<()>, Marker>,
+    F: TrySystemExt<In, (), Vec<anyhow::Error>, Marker> + IntoSystem<In, ResultVec<()>, Marker>,
+    Marker: Send + Sync + 'static,
 {
-    fn anyhow(self) -> impl System<In = In, Out = ()> {
+    fn anyhow_alert(self) -> impl System<In = In, Out = ()> {
         self.map(|result: ResultVec<()>| {
             result.map_err(|errors| {
                 errors
@@ -27,23 +28,24 @@ where
                     .collect::<Vec<_>>()
             })
         })
-        .pipe_err(ToastPlugin::toast)
+        .pipe_err(AlertsPlugin::alert)
     }
 }
 
-impl<F, In, Marker> AnyToastsExt<In, Marker, anyhow::Error> for F
+impl<F, In, Marker> AnyhowAlertExt<In, anyhow::Error, Marker> for F
 where
-    F: TrySystemExt<In, Marker, (), anyhow::Error> + IntoSystem<In, Result<()>, Marker>,
+    F: TrySystemExt<In, (), anyhow::Error, Marker> + IntoSystem<In, Result<()>, Marker>,
+    Marker: Send + Sync + 'static,
 {
-    fn anyhow(self) -> impl System<In = In, Out = ()> {
+    fn anyhow_alert(self) -> impl System<In = In, Out = ()> {
         self.map(|result: Result<()>| result.map_err(|error| vec![format!("{error}")]))
-            .pipe_err(ToastPlugin::toast)
+            .pipe_err(AlertsPlugin::alert)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use bevy_toasts_ui::Toast;
+    use bevy_ui_mod_alerts::Alert;
     use thiserror::Error;
 
     use super::*;
@@ -78,15 +80,15 @@ mod tests {
     fn app() -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
-        app.add_plugins(ToastPlugin::new());
+        app.add_plugins(AlertsPlugin::new());
         app
     }
 
     #[test]
     fn test_one_error_system() {
         let mut app = app();
-        app.add_systems(Update, alternate_output.anyhow());
-        let mut query = app.world.query::<&Toast>();
+        app.add_systems(Update, alternate_output.anyhow_alert());
+        let mut query = app.world.query::<&Alert>();
         assert_eq!(query.iter(&app.world).count(), 0);
         app.update();
         assert_eq!(query.iter(&app.world).count(), 0);
@@ -101,8 +103,8 @@ mod tests {
     #[test]
     fn test_error_collecting_system() {
         let mut app = app();
-        app.add_systems(Update, alternate_output_many_errors.anyhow());
-        let mut query = app.world.query::<&Toast>();
+        app.add_systems(Update, alternate_output_many_errors.anyhow_alert());
+        let mut query = app.world.query::<&Alert>();
         assert_eq!(query.iter(&app.world).count(), 0);
         app.update();
         assert_eq!(query.iter(&app.world).count(), 0);

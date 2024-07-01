@@ -1,5 +1,5 @@
 [package]
-name = "bevy_anytoasts"
+name = "bevy_anyhow_alert"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,7 +11,7 @@ bevy = { version = "0.13", default-features = false, features = [
 ] }
 anyhow = "1.0"
 bevy_mod_try_system = { git = "https://github.com/GroveStStudios/bevy_mod_try_system" }
-bevy_toasts_ui = { git = "https://github.com/GroveStStudios/bevy_toasts_ui" }
+bevy_ui_mod_alerts = { git = "https://github.com/GroveStStudios/bevy_ui_mod_alerts" }
 
 [dev-dependencies]
 thiserror = "1.0"

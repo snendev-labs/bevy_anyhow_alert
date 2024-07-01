@@ -1,4 +1,4 @@
-# bevy_anytoasts
+# bevy_anyhow_alert
 
 Simple application-level error management. Mildly configurable; this is in early stages. The main benefit: your systems can return `anyhow::Result` (or even `Result<T, Vec<anyhow::Error>>`)!
 
@@ -6,10 +6,10 @@ Simple application-level error management. Mildly configurable; this is in early
 
 When writing your systems, return one of the two accepted types:
 
-- `bevy_anytoasts::Result<T>`: a re-export of `anyhow::Result<T>`
-- `bevy_anytoasts::ResultVec<T>`: an alias for `Result<T, Vec<anyhow::Error>>`
+- `bevy_anyhow_alert::Result<T>`: a re-export of `anyhow::Result<T>`
+- `bevy_anyhow_alert::ResultVec<T>`: an alias for `Result<T, Vec<anyhow::Error>>`
 
-Then call `my_system.anyhow()`! When it errors, you'll see toasts fire (don't forget a camera).
+Then call `my_system.anyhow_alert()`! When it errors, you'll see toasts fire (don't forget a camera).
 
 ```rust
 
