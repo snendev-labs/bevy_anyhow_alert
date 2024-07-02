@@ -10,16 +10,12 @@ readme = "README.md"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.13", default-features = false, features = [
-    "bevy_ui",
-    "bevy_text",
-    "default_font",
-] }
+bevy_ecs = { version = "0.13", default-features = false }
 anyhow = "1.0"
-bevy_mod_try_system = { version = "0.1" }
 bevy_ui_mod_alerts = { version = "0.1" }
 
 [dev-dependencies]
+bevy = { version = "0.13", default-features = false }
 thiserror = "1.0"
 
 [[example]]

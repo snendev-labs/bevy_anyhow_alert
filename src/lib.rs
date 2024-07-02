@@ -12,7 +12,7 @@
 //!
 //! ```
 //! use bevy::prelude::*;
-//! use bevy_anyhow_alert::{AlertsPlugin, AnyhowAlertExt, Result};
+//! use bevy_anyhow_alert::{AlertsPlugin, AnyhowAlertExt, anyhow::Result};
 //!
 //! fn main() {
 //!     let mut app = App::new();
@@ -43,12 +43,13 @@
 //!
 //! ```
 //! use bevy::prelude::*;
-//! use bevy_anyhow_alert::{AnyhowAlertExt, Result, ResultVec};
+//! use bevy_anyhow_alert::{AnyhowAlertExt, ResultVec};
+//! use bevy_anyhow_alert::anyhow::{Error, Result};
 //!
 //! #[derive(Component)]
 //! struct MyComponent;
 //!
-//! fn fallible_system(my_query: Query<&MyComponent>) -> ResultVec<()> {
+//! fn fallible_system(my_query: Query<&MyComponent>) -> ResultVec<(), Error> {
 //!     let mut errors = vec![];
 //!     for my_value in my_query.iter() {
 //!         if let Err(error) = get_result() {
@@ -68,85 +69,134 @@
 //! ```
 //!
 //! The resulting UI is somewhat restylable but may not fit every application.
+//!
+//! Furthermore, this does not allow for any actual error maangement beyond displaying them.
+//! For errors that should be handled in more meaningful ways, consider using `system.pipe`
+//! directly or using `.pipe_err` from the `bevy_try_mod_system` crate.
 
-use bevy::prelude::*;
+use bevy_ecs::prelude::*;
 
-pub use bevy_mod_try_system::*;
+pub use anyhow;
 pub use bevy_ui_mod_alerts::AlertsPlugin;
 
-pub type ErrorVec = Vec<anyhow::Error>;
-pub type ResultVec<T> = std::result::Result<T, ErrorVec>;
-pub type Result<T> = anyhow::Result<T>;
+pub type ResultVec<T, E> = std::result::Result<T, Vec<E>>;
 
 /// Defines the `anyhow_alert` method which pipes system output to an Alert UI if the output
 /// is an error.
 ///
-/// This trait is implemented for all `IntoSystem` that return `anyhow::Result` or
-/// `Result<(), Vec<anyhow::Error>>`.
-pub trait AnyhowAlertExt<In, Err, Marker>: TrySystemExt<In, (), Err, Marker>
+/// This trait is implemented for all `IntoSystem` that return `Result<(), Err>`.
+pub trait AnyhowAlertExt<In, Err, Marker>
 where
-    Err: std::fmt::Debug + Send + Sync + 'static,
+    Err: std::fmt::Display + Send + Sync + 'static,
 {
-    /// Pipes system output to an alert UI if the Result is Err. The `Ok` variant can be piped
-    /// into subsequent systems.
+    /// Pipes system output to an alert UI if the Result is Err.
     fn anyhow_alert(self) -> impl System<In = In, Out = ()>;
 }
 
-impl<F, In, Marker> AnyhowAlertExt<In, Vec<anyhow::Error>, Marker> for F
+impl<F, In, Err, Marker> AnyhowAlertExt<In, Err, Marker> for F
 where
-    F: TrySystemExt<In, (), Vec<anyhow::Error>, Marker> + IntoSystem<In, ResultVec<()>, Marker>,
+    F: IntoSystem<In, Result<(), Err>, Marker>,
+    Err: std::fmt::Debug + std::fmt::Display + Send + Sync + 'static,
     Marker: Send + Sync + 'static,
 {
     fn anyhow_alert(self) -> impl System<In = In, Out = ()> {
-        self.map(|result: ResultVec<()>| {
-            result.map_err(|errors| {
-                errors
-                    .into_iter()
-                    .map(|error| format!("{error}"))
-                    .collect::<Vec<_>>()
-            })
-        })
-        .pipe_err(AlertsPlugin::alert)
+        self.pipe(anyhow_alert_system)
     }
 }
 
-impl<F, In, Marker> AnyhowAlertExt<In, anyhow::Error, Marker> for F
+/// The inner PipeableSystem used by [`AnyhowAlertExt`].
+///
+/// Use this by piping a system that outputs a `Result<(), Err>` into this system.
+///
+/// ```
+/// use bevy::prelude::*;
+/// use bevy_anyhow_alert::*;
+/// fn my_system() -> anyhow::Result<()> { /* ... */ Ok(()) }
+/// // ...
+/// my_system.pipe(anyhow_alert_system);
+/// ```
+pub fn anyhow_alert_system<Err>(In(input): In<Result<(), Err>>, commands: Commands)
 where
-    F: TrySystemExt<In, (), anyhow::Error, Marker> + IntoSystem<In, Result<()>, Marker>,
+    Err: std::fmt::Display,
+{
+    if let Err(error) = input {
+        AlertsPlugin::alert(In(vec![format!("{error}")]), commands)
+    }
+}
+
+/// Defines the `anyhow_alert` method which pipes system output to an Alert UI if the output
+/// `Vec<MyError>` is non-empty.
+///
+/// This trait is implemented for all `IntoSystem` that return `Result<(), Vec<Err>>`.
+pub trait AnyhowAlertsExt<In, Err, Marker>
+where
+    Err: std::fmt::Debug + Send + Sync + 'static,
+{
+    /// Pipes system output to an alert UI if the Result is Err.
+    fn anyhow_alerts(self) -> impl System<In = In, Out = ()>;
+}
+
+impl<F, In, Err, Marker> AnyhowAlertsExt<In, Vec<Err>, Marker> for F
+where
+    F: IntoSystem<In, Result<(), Vec<Err>>, Marker>,
+    Err: std::error::Error + Send + Sync + 'static,
     Marker: Send + Sync + 'static,
 {
-    fn anyhow_alert(self) -> impl System<In = In, Out = ()> {
-        self.map(|result: Result<()>| result.map_err(|error| vec![format!("{error}")]))
-            .pipe_err(AlertsPlugin::alert)
+    fn anyhow_alerts(self) -> impl System<In = In, Out = ()> {
+        self.pipe(anyhow_alerts_system)
+    }
+}
+
+/// The inner PipeableSystem used by [`AnyhowAlertsExt`].
+///
+/// Use this by piping a system that outputs a `Result<(), Vec<Err>>` into this system.
+///
+/// ```
+/// use bevy::prelude::*;
+/// use bevy_anyhow_alert::*;
+/// fn my_system() -> Result<(), Vec<anyhow::Error>> { /* ... */ Ok(()) }
+/// // ...
+/// my_system.pipe(anyhow_alerts_system);
+/// ```
+pub fn anyhow_alerts_system<Err>(In(input): In<Result<(), Vec<Err>>>, commands: Commands)
+where
+    Err: std::fmt::Display,
+{
+    if let Err(errors) = input {
+        let messages = errors
+            .into_iter()
+            .map(|error| format!("{error}"))
+            .collect::<Vec<_>>();
+        AlertsPlugin::alert(In(messages), commands)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use bevy::prelude::*;
     use bevy_ui_mod_alerts::Alert;
     use thiserror::Error;
-
-    use super::*;
 
     #[derive(Debug, Error)]
     #[error("testing!")]
     struct TestError;
 
-    fn alternate_output(mut counter: Local<usize>) -> Result<()> {
+    fn alternate_output(mut counter: Local<usize>) -> Result<(), TestError> {
         *counter += 1;
         if *counter % 2 == 1 {
             Ok(())
         } else {
-            Err(anyhow::Error::new(TestError))
+            Err(TestError)
         }
     }
 
-    fn alternate_output_many_errors(mut counter: Local<usize>) -> ResultVec<()> {
+    fn alternate_output_many_errors(mut counter: Local<usize>) -> ResultVec<(), TestError> {
         *counter += 1;
         if *counter % 2 == 1 {
             Ok(())
         } else {
-            Err(vec![anyhow::Error::new(TestError)])
+            Err(vec![TestError])
         }
     }
 
@@ -176,7 +226,7 @@ mod tests {
     #[test]
     fn test_error_collecting_system() {
         let mut app = app();
-        app.add_systems(Update, alternate_output_many_errors.anyhow_alert());
+        app.add_systems(Update, alternate_output_many_errors.anyhow_alerts());
         let mut query = app.world.query::<&Alert>();
         assert_eq!(query.iter(&app.world).count(), 0);
         app.update();
