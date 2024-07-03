@@ -3,8 +3,8 @@
 //! `bevy_anyhow_alert` provides an extension trait enabling Bevy systems that return `Result`
 //! types to opt-in to a simple `Alert`-based error UI.
 //!
-//! The main benefit: your systems can return `anyhow::Result` (or even
-//! `Result<T, Vec<anyhow::Error>>`) with one (chainable) method: `system.anyhow_alert()`.
+//! The main benefit: your systems can return `Result<T, E>` (or even `Result<T, Vec<E>>`)
+//! with one chain call: `system.anyhow_alert()` (or its counterpart, `system.anyhow_alerts`).
 //!
 //! ## Examples
 //!
