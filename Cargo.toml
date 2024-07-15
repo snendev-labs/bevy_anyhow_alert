@@ -1,6 +1,6 @@
 [package]
 name = "bevy_anyhow_alert"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Sean Sullivan <me@snen.dev>"]
 description = "Easy system error handling with Bevy; let your systems return `Result`!"
 repository = "https://github.com/snendev-labs/bevy_anyhow_alert"
