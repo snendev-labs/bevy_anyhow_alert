@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+use bevy::color::palettes;
 use bevy::prelude::*;
 
 use bevy_anyhow_alert::{AlertsPlugin, AnyhowAlertExt};
@@ -31,7 +32,7 @@ fn init(mut commands: Commands) {
                     align_items: AlignItems::Center,
                     ..Default::default()
                 },
-                background_color: Color::ANTIQUE_WHITE.into(),
+                background_color: Color::Srgba(palettes::css::ANTIQUE_WHITE).into(),
                 ..Default::default()
             },
         ))

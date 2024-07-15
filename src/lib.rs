@@ -211,31 +211,31 @@ mod tests {
     fn test_one_error_system() {
         let mut app = app();
         app.add_systems(Update, alternate_output.anyhow_alert());
-        let mut query = app.world.query::<&Alert>();
-        assert_eq!(query.iter(&app.world).count(), 0);
+        let mut query = app.world_mut().query::<&Alert>();
+        assert_eq!(query.iter(app.world()).count(), 0);
         app.update();
-        assert_eq!(query.iter(&app.world).count(), 0);
+        assert_eq!(query.iter(app.world()).count(), 0);
         app.update();
-        assert_eq!(query.iter(&app.world).count(), 1);
+        assert_eq!(query.iter(app.world()).count(), 1);
         app.update();
-        assert_eq!(query.iter(&app.world).count(), 1);
+        assert_eq!(query.iter(app.world()).count(), 1);
         app.update();
-        assert_eq!(query.iter(&app.world).count(), 2);
+        assert_eq!(query.iter(app.world()).count(), 2);
     }
 
     #[test]
     fn test_error_collecting_system() {
         let mut app = app();
         app.add_systems(Update, alternate_output_many_errors.anyhow_alerts());
-        let mut query = app.world.query::<&Alert>();
-        assert_eq!(query.iter(&app.world).count(), 0);
+        let mut query = app.world_mut().query::<&Alert>();
+        assert_eq!(query.iter(app.world()).count(), 0);
         app.update();
-        assert_eq!(query.iter(&app.world).count(), 0);
+        assert_eq!(query.iter(app.world()).count(), 0);
         app.update();
-        assert_eq!(query.iter(&app.world).count(), 1);
+        assert_eq!(query.iter(app.world()).count(), 1);
         app.update();
-        assert_eq!(query.iter(&app.world).count(), 1);
+        assert_eq!(query.iter(app.world()).count(), 1);
         app.update();
-        assert_eq!(query.iter(&app.world).count(), 2);
+        assert_eq!(query.iter(app.world()).count(), 2);
     }
 }
